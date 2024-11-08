@@ -3,6 +3,20 @@ import serial
 import threading
 import time
 
+# Serial communication setup (update the port as needed)
+serial_port = serial.Serial("COMx", baudrate=9600, timeout=1)
+
+# Start a thread for reading data from the serial port
+
+
+def serial_thread():
+    read_data_from_serial(serial_port)
+
+
+# Start the thread
+thread = threading.Thread(target=serial_thread, daemon=True)
+thread.start()
+
 # Initialize variables
 sats = 0
 gps_data = {"latitude": "0.0000", "longitude": "0.0000",
