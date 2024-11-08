@@ -58,61 +58,74 @@ window = sg.Window("Serial Display GUI", layout, margins=(200, 100))
 # Serial Communication Setup (simulating for now)
 
 
+import re
+
 def read_data_from_serial(serial_port):
     global sats  # Ensure we modify the global 'sats' variable
 
     while True:
-        # Simulate receiving GPS and IMU data via serial (replace with actual reading from serial port)
+        # Read data from serial port
         data = serial_port.readline().decode('utf-8').strip()
+        
         if data:
             print(f"Received data: {data}")  # Print data for debugging
 
             try:
-                # Split the data into parts (assuming CSV format: lat, lon, elev, sats, gyro_x, gyro_y, ...)
-                parsed_data = data.split(',')
+                # Check for GPS data first (latitude, longitude, elevation, satellites)
+                if "Latitude" in data and "Longitude" in data:
+                    # Extract GPS data using regex
+                    gps_match = re.search(r"Latitude:\s*(-?\d+\.\d+),\s*Longitude:\s*(-?\d+\.\d+),\s*Elevation:\s*(-?\d+\.\d+),\s*Satellites:\s*(\d+)", data)
+                    if gps_match:
+                        gps_data["latitude"] = gps_match.group(1)
+                        gps_data["longitude"] = gps_match.group(2)
+                        gps_data["elevation"] = gps_match.group(3)
+                        gps_data["satellites"] = gps_match.group(4)
+                        window['latitude'].update(gps_data["latitude"])
+                        window['longitude'].update(gps_data["longitude"])
+                        window['elevation'].update(gps_data["elevation"])
+                        window['sats'].update(gps_data["satellites"])
+                        # Update satellite count
+                        sats = int(gps_data["satellites"])
 
-                # Update GPS data
-                gps_data["latitude"] = parsed_data[0]
-                gps_data["longitude"] = parsed_data[1]
-                gps_data["elevation"] = parsed_data[2]
-                gps_data["satellites"] = parsed_data[3]
-                window['latitude'].update(gps_data["latitude"])
-                window['longitude'].update(gps_data["longitude"])
-                window['elevation'].update(gps_data["elevation"])
-                window['sats'].update(gps_data["satellites"])
+                # Check for IMU data (acceleration, gyroscope, and magnetic field)
+                if "Acceleration" in data:
+                    # Extract Acceleration values (X, Y, Z)
+                    accel_match = re.search(r"X:\s*(-?\d+\.\d+),\s*Y:\s*(-?\d+\.\d+),\s*Z:\s*(-?\d+\.\d+)", data)
+                    if accel_match:
+                        imu_data["accel_x"] = accel_match.group(1)
+                        imu_data["accel_y"] = accel_match.group(2)
+                        imu_data["accel_z"] = accel_match.group(3)
+                        # Update GUI for Acceleration data
+                        window['accel_x'].update(imu_data["accel_x"])
+                        window['accel_y'].update(imu_data["accel_y"])
+                        window['accel_z'].update(imu_data["accel_z"])
 
-                # Update IMU data
-                imu_data["gyro_x"] = parsed_data[4]
-                imu_data["gyro_y"] = parsed_data[5]
-                imu_data["gyro_z"] = parsed_data[6]
-                imu_data["accel_x"] = parsed_data[7]
-                imu_data["accel_y"] = parsed_data[8]
-                imu_data["accel_z"] = parsed_data[9]
-                imu_data["mag_x"] = parsed_data[10]
-                imu_data["mag_y"] = parsed_data[11]
-                imu_data["mag_z"] = parsed_data[12]
+                elif "Gyroscope" in data:
+                    # Extract Gyroscope values (X, Y, Z)
+                    gyro_match = re.search(r"X:\s*(-?\d+\.\d+),\s*Y:\s*(-?\d+\.\d+),\s*Z:\s*(-?\d+\.\d+)", data)
+                    if gyro_match:
+                        imu_data["gyro_x"] = gyro_match.group(1)
+                        imu_data["gyro_y"] = gyro_match.group(2)
+                        imu_data["gyro_z"] = gyro_match.group(3)
+                        # Update GUI for Gyroscope data
+                        window['gyro_x'].update(imu_data["gyro_x"])
+                        window['gyro_y'].update(imu_data["gyro_y"])
+                        window['gyro_z'].update(imu_data["gyro_z"])
 
-                # Update IMU fields in the GUI
-                window['gyro_x'].update(imu_data["gyro_x"])
-                window['gyro_y'].update(imu_data["gyro_y"])
-                window['gyro_z'].update(imu_data["gyro_z"])
-                window['accel_x'].update(imu_data["accel_x"])
-                window['accel_y'].update(imu_data["accel_y"])
-                window['accel_z'].update(imu_data["accel_z"])
-                window['mag_x'].update(imu_data["mag_x"])
-                window['mag_y'].update(imu_data["mag_y"])
-                window['mag_z'].update(imu_data["mag_z"])
-
-                # Only update satellite count if valid GPS data is received
-                # Ensure the satellite data is valid (numeric)
-                if gps_data["satellites"].isdigit():
-                    sats = int(gps_data["satellites"])
+                elif "Magnetic Field" in data:
+                    # Extract Magnetic Field values (X, Y, Z)
+                    mag_match = re.search(r"X:\s*(-?\d+\.\d+),\s*Y:\s*(-?\d+\.\d+),\s*Z:\s*(-?\d+\.\d+)", data)
+                    if mag_match:
+                        imu_data["mag_x"] = mag_match.group(1)
+                        imu_data["mag_y"] = mag_match.group(2)
+                        imu_data["mag_z"] = mag_match.group(3)
+                        # Update GUI for Magnetic Field data
+                        window['mag_x'].update(imu_data["mag_x"])
+                        window['mag_y'].update(imu_data["mag_y"])
+                        window['mag_z'].update(imu_data["mag_z"])
 
             except Exception as e:
                 print(f"Error processing data: {e}")
-
-        else:
-            print("No data received...")
 
 # Thread to handle serial reading without blocking the GUI
 
