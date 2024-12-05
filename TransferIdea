@@ -1,0 +1,24 @@
+void setup() {
+  // Initialize Serial for debugging via USB (optional)
+  Serial.begin(9600);  // This is for debugging over the micro USB (can be commented out if not needed)
+
+  // Initialize Serial1 for communication with FTDI cable (TX/RX)
+  Serial1.begin(9600);  // Match the baud rate with the FTDI cable and terminal software
+}
+
+void loop() {
+  // Send data from Teensy to PC via FTDI
+  Serial1.println("Hello from Teensy via FTDI cable!");
+
+  // Optionally read data from FTDI (from PC or external device)
+  if (Serial1.available()) {
+    char incomingByte = Serial1.read();
+    Serial.print("Received from FTDI: ");
+    Serial.println(incomingByte);
+  }
+
+  // Debugging to the micro USB (if needed)
+  Serial.println("Looping...");
+
+  delay(100);  // Add delay to avoid overwhelming the serial buffer
+}
